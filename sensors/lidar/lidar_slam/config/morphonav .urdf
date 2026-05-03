@@ -1,0 +1,268 @@
+<?xml version="1.0"?>
+<robot name="morphonav">
+
+  <!-- Virtual ground frame — massless anchor for SLAM base_frame -->
+  <link name="base_footprint"/>
+
+  <!-- Lift body 12cm above ground -->
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.12" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Robot chassis: 40cm long x 28cm wide x 8cm tall -->
+  <link name="base_link">
+    <visual>
+      <geometry><box size="0.40 0.28 0.08"/></geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="dark_gray"><color rgba="0.2 0.2 0.2 1.0"/></material>
+    </visual>
+    <collision>
+      <geometry><box size="0.40 0.28 0.08"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="4.0"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.0653" iyy="0.1083" izz="0.1493" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <!-- ═══════════════════════════════════════
+       FRONT STEERING HUBS (servo-controlled)
+       revolute = limited rotation around Z axis
+       ═══════════════════════════════════════ -->
+
+  <joint name="front_left_steer_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_left_steer"/>
+    <origin xyz="0.14 0.15 -0.05" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <!-- ±0.6 rad ≈ ±34° steering range -->
+    <limit lower="-0.6" upper="0.6" effort="10" velocity="1.0"/>
+  </joint>
+  <link name="front_left_steer">
+    <visual>
+      <geometry><cylinder radius="0.015" length="0.04"/></geometry>
+      <material name="silver"><color rgba="0.7 0.7 0.7 1"/></material>
+    </visual>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.0001" iyy="0.0001" izz="0.0001" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="front_right_steer_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="front_right_steer"/>
+    <!-- Mirror of left: y is negative -->
+    <origin xyz="0.14 -0.15 -0.05" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-0.6" upper="0.6" effort="10" velocity="1.0"/>
+  </joint>
+  <link name="front_right_steer">
+    <visual>
+      <geometry><cylinder radius="0.015" length="0.04"/></geometry>
+      <material name="silver"><color rgba="0.7 0.7 0.7 1"/></material>
+    </visual>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.0001" iyy="0.0001" izz="0.0001" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <!-- ═══════════════════════════════════════
+       WHEELS — continuous = spin freely, no limit
+       rpy="1.5708 0 0" rotates cylinder 90° so it rolls correctly
+       (URDF cylinders are vertical by default)
+       ═══════════════════════════════════════ -->
+
+  <!-- Front wheels attach to steering hubs, not base_link -->
+  <joint name="front_left_wheel_joint" type="continuous">
+    <parent link="front_left_steer"/>
+    <child link="front_left_wheel"/>
+    <origin xyz="0 0 -0.04" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <link name="front_left_wheel">
+    <visual>
+      <geometry><cylinder radius="0.06" length="0.04"/></geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <material name="black_wheel"><color rgba="0.1 0.1 0.1 1"/></material>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.06" length="0.04"/></geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.3"/>
+      <inertia ixx="0.00058" iyy="0.00058" izz="0.00054" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="front_right_wheel_joint" type="continuous">
+    <parent link="front_right_steer"/>
+    <child link="front_right_wheel"/>
+    <origin xyz="0 0 -0.04" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <link name="front_right_wheel">
+    <visual>
+      <geometry><cylinder radius="0.06" length="0.04"/></geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <material name="black_wheel"><color rgba="0.1 0.1 0.1 1"/></material>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.06" length="0.04"/></geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.3"/>
+      <inertia ixx="0.00058" iyy="0.00058" izz="0.00054" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <!-- Rear wheels are drive wheels — attach directly to base_link -->
+  <joint name="rear_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_left_wheel"/>
+    <origin xyz="-0.14 0.15 -0.09" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <link name="rear_left_wheel">
+    <visual>
+      <geometry><cylinder radius="0.06" length="0.04"/></geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <material name="black_wheel"><color rgba="0.1 0.1 0.1 1"/></material>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.06" length="0.04"/></geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.3"/>
+      <inertia ixx="0.00058" iyy="0.00058" izz="0.00054" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="rear_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_right_wheel"/>
+    <origin xyz="-0.14 -0.15 -0.09" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <link name="rear_right_wheel">
+    <visual>
+      <geometry><cylinder radius="0.06" length="0.04"/></geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <material name="black_wheel"><color rgba="0.1 0.1 0.1 1"/></material>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.06" length="0.04"/></geometry>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.3"/>
+      <inertia ixx="0.00058" iyy="0.00058" izz="0.00054" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <!-- ═══════════════════════════════════════
+       LIDAR — fixed on top, centered
+       frame name must match real robot: laser_frame
+       ═══════════════════════════════════════ -->
+
+  <joint name="laser_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="laser_frame"/>
+    <origin xyz="0 0 0.1" rpy="0 0 0"/>
+  </joint>
+  <link name="laser_frame">
+    <visual>
+      <geometry><cylinder radius="0.04" length="0.06"/></geometry>
+      <material name="lidar_black"><color rgba="0.05 0.05 0.05 1"/></material>
+    </visual>
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.0002" iyy="0.0002" izz="0.0002" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <!-- ═══════════════════════════════════════
+       GAZEBO PLUGINS
+       These are ignored by RViz/URDF tools —
+       only active when loaded in Gazebo
+       ═══════════════════════════════════════ -->
+
+  <!-- Simulated RPLidar: publishes sensor_msgs/LaserScan to /scan -->
+  <gazebo reference="laser_frame">
+    <sensor type="ray" name="rplidar_sim">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>false</visualize>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>      <!-- 360 rays = 1 per degree -->
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.2</min>   <!-- matches real A1 min range -->
+          <max>12.0</max>  <!-- matches real A1 max range -->
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>  <!-- small noise to mimic real sensor -->
+        </noise>
+      </ray>
+      <plugin name="gazebo_ros_lidar" filename="libgazebo_ros_ray_sensor.so">
+        <ros>
+          <remapping>~/out:=/scan</remapping>
+        </ros>
+        <output_type>sensor_msgs/LaserScan</output_type>
+        <frame_name>laser_frame</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- Ackermann drive: listens to /cmd_vel, publishes odom + TF -->
+  <gazebo>
+    <plugin name="ackermann_drive" filename="libgazebo_ros_ackermann_drive.so">
+      <ros>
+        <remapping>cmd_vel:=cmd_vel</remapping>
+        <remapping>odom:=odom</remapping>
+      </ros>
+
+      <!-- Wheel joints — rear ones are driven, front ones just roll -->
+      <left_rear_joint>rear_left_wheel_joint</left_rear_joint>
+      <right_rear_joint>rear_right_wheel_joint</right_rear_joint>
+      <left_front_joint>front_left_wheel_joint</left_front_joint>
+      <right_front_joint>front_right_wheel_joint</right_front_joint>
+
+      <!-- Steering joints — controlled by servo in real robot -->
+      <left_steering_joint>front_left_steer_joint</left_steering_joint>
+      <right_steering_joint>front_right_steer_joint</right_steering_joint>
+
+      <!-- Robot geometry — must match URDF values above -->
+      <kingpin_width>0.30</kingpin_width>   <!-- distance between front wheel centers -->
+      <wheelbase>0.28</wheelbase>           <!-- distance front-to-rear axle -->
+      <wheel_diameter>0.12</wheel_diameter> <!-- 2 x wheel radius (0.06 x 2) -->
+      <max_steer>0.6</max_steer>            <!-- must match joint limit above -->
+
+      <!-- Odometry frames — must match slam_params_sim.yaml -->
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>   <!-- publishes odom → base_footprint TF -->
+      <publish_wheel_tf>false</publish_wheel_tf> <!-- not needed for SLAM -->
+
+      <update_rate>50</update_rate>
+    </plugin>
+  </gazebo>
+
+</robot>

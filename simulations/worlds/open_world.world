@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="default">
+
+    <!-- Physics -->
+    <physics name="default_physics" type="ode">
+      <real_time_update_rate>1000</real_time_update_rate>
+      <max_step_size>0.001</max_step_size>
+      <gravity>0 0 -9.81</gravity>
+    </physics>
+
+    <!-- Lighting and ground -->
+    <include><uri>model://sun</uri></include>
+    <include><uri>model://ground_plane</uri></include>
+
+    <!-- Empty workspace.
+         Use Gazebo's Insert tab (top-left of the simulator) to drag-drop
+         primitives (Box / Sphere / Cylinder) or Online models into the
+         scene.  You can also "Edit > Building Editor" to draw walls.
+
+         Save your custom layout via   File > Save World As   for re-use.  -->
+
+    <!-- Camera starts above the centre, looking slightly down -->
+    <gui fullscreen="0">
+      <camera name="user_camera">
+        <pose>0 -3.5 3.5 0 0.65 1.5708</pose>
+      </camera>
+    </gui>
+
+  </world>
+</sdf>
