@@ -25,10 +25,6 @@ setup(
         # URDF / Xacro robot description
         (os.path.join('share', package_name, 'urdf'),
             glob('urdf/*')),
-
-        # Gazebo world files
-        (os.path.join('share', package_name, 'worlds'),
-            glob('worlds/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -39,8 +35,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            # Registers teleop as a ros2 run command
             'ackermann_teleop = simulations.ackermann_teleop:main',
+            'trajectory_publisher = simulations.trajectory_publisher:main',
         ],
     },
 )

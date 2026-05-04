@@ -121,4 +121,18 @@ def generate_launch_description():
             prefix='xterm -e',
             condition=IfCondition(launch_teleop),
         ),
+        
+         # ── 7. Trajectory Publisher ──────────────────────────────────────
+        # Reads /odom and publishes nav_msgs/Path to /trajectory
+        # RViz renders this as a growing trail behind the robot
+        Node(
+            package='simulations',
+            executable='trajectory_publisher',
+            name='trajectory_publisher',
+            output='screen',
+            parameters=[{
+                'use_sim_time': True,
+                'max_poses': 0,   # 0 = unlimited; set e.g. 500 to cap trail length
+            }],
+        ),
     ])
