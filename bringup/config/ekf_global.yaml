@@ -1,0 +1,57 @@
+# EKF global: fuses /odometry/filtered + GPS (via navsat_transform) -> /odometry/global
+#
+# navsat_transform_node converts /gps/fix into a local odometry message
+# (/odometry/gps) referenced to the same ENU frame as /odometry/filtered.
+# This EKF then fuses both to produce a GPS-corrected global estimate.
+
+ekf_global:
+  ros__parameters:
+    frequency: 30.0
+    sensor_timeout: 0.1
+    two_d_mode: true
+    publish_tf: false         # no extra TF — slam_toolbox owns the chain
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: map          # global EKF works in map frame
+
+    # --- /odometry/filtered (output of ekf_local) ---
+    odom0: /odometry/filtered
+    odom0_config:
+      - [true,  true,  false]
+      - [false, false, true ]
+      - [true,  true,  false]
+      - [false, false, true ]
+      - [false, false, false]
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 5
+
+    # --- /odometry/gps (navsat_transform output) ---
+    odom1: /odometry/gps
+    odom1_config:
+      - [true,  true,  false]   # GPS provides x, y position
+      - [false, false, false]
+      - [false, false, false]
+      - [false, false, false]
+      - [false, false, false]
+    odom1_differential: false
+    odom1_relative: false
+    odom1_queue_size: 5
+
+    process_noise_covariance:
+      - [0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.05, 0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.03, 0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.06, 0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025, 0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.025, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.04, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.01, 0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.02, 0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.015]

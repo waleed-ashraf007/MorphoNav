@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- GPS link (u-blox NEO-7M antenna). Mounted at the rear of the chassis,
+       elevated for sky view. NavSatFix is published in this frame. -->
+  <xacro:macro name="morphonav_gps" params="parent use_sim:=false">
+    <joint name="gps_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child  link="gps_link"/>
+      <origin xyz="-0.15 0 ${chassis_h/2 + 0.06}" rpy="0 0 0"/>
+    </joint>
+
+    <link name="gps_link">
+      <visual>
+        <geometry><box size="0.025 0.025 0.008"/></geometry>
+        <material name="gps_module"><color rgba="0.05 0.05 0.05 1.0"/></material>
+      </visual>
+      <inertial>
+        <mass value="0.010"/>
+        <inertia ixx="1e-7" iyy="1e-7" izz="1e-7" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+    <xacro:if value="${use_sim}">
+      <gazebo reference="gps_link">
+        <sensor name="gps_sensor" type="gps">
+          <always_on>true</always_on>
+          <update_rate>5</update_rate>
+          <plugin name="gps_plugin" filename="libgazebo_ros_gps_sensor.so">
+            <ros>
+              <remapping>~/out:=/gps/fix</remapping>
+            </ros>
+            <frame_name>gps_link</frame_name>
+          </plugin>
+          <gps>
+            <position_sensing>
+              <horizontal>
+                <noise type="gaussian"><mean>0</mean><stddev>1.5</stddev></noise>
+              </horizontal>
+              <vertical>
+                <noise type="gaussian"><mean>0</mean><stddev>3.0</stddev></noise>
+              </vertical>
+            </position_sensing>
+          </gps>
+        </sensor>
+      </gazebo>
+    </xacro:if>
+  </xacro:macro>
+
+</robot>

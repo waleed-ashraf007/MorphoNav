@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>morphonav_imu</name>
+  <version>0.0.1</version>
+  <description>MorphoNav IMU host-side stack: Madgwick orientation filter, covariance injector, sensor-test TF bridge, magnetometer calibration helper.</description>
+  <maintainer email="w.ashraf2002@gmail.com">Waleed Ashraf</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>imu_filter_madgwick</depend>
+  <depend>python3-numpy</depend>
+
+  <exec_depend>ros2launch</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

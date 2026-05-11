@@ -19,6 +19,7 @@
   <depend>laser_filters</depend>
   <depend>rviz2</depend>
   <depend>xacro</depend>
+  <depend>morphonav_description</depend>
 
   <exec_depend>ros2launch</exec_depend>
 

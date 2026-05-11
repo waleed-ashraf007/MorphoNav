@@ -1,0 +1,15 @@
+# navsat_transform_node: converts /gps/fix -> /odometry/gps (ENU local frame)
+# Subscribes: /gps/fix, /odometry/filtered (for heading initialisation)
+# Publishes:  /odometry/gps, /gps/filtered
+
+navsat_transform:
+  ros__parameters:
+    frequency: 30.0
+    delay: 3.0                    # wait for EKF to warm up before fusing GPS
+    magnetic_declination_radians: 0.0   # update for your location
+    yaw_offset: 0.0               # offset between IMU yaw and true north
+    zero_altitude: true           # ignore GPS altitude (2D mode)
+    broadcast_utm_transform: false
+    publish_filtered_gps: false
+    use_odometry_yaw: false       # use IMU yaw from /odometry/filtered
+    wait_for_datum: false

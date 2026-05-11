@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- IMU link (MPU9250). Mounted on top of the chassis, just behind the lidar
+       pedestal. Frame convention: ENU. The host-side firmware applies the AK8963
+       axis remap before publishing /imu/mag, so this link IS the published frame. -->
+  <xacro:macro name="morphonav_imu" params="parent use_sim:=false">
+    <joint name="imu_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child  link="imu_link"/>
+      <origin xyz="-0.05 0 ${chassis_h/2 + 0.05}" rpy="0 0 0"/>
+    </joint>
+
+    <link name="imu_link">
+      <visual>
+        <geometry><box size="0.020 0.018 0.004"/></geometry>
+        <material name="imu_pcb"><color rgba="0.10 0.40 0.10 1.0"/></material>
+      </visual>
+      <inertial>
+        <mass value="0.005"/>
+        <inertia ixx="1e-7" iyy="1e-7" izz="1e-7" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+    <xacro:if value="${use_sim}">
+      <gazebo reference="imu_link">
+        <sensor name="imu_sensor" type="imu">
+          <always_on>true</always_on>
+          <update_rate>100</update_rate>
+          <imu>
+            <angular_velocity>
+              <x><noise type="gaussian"><mean>0</mean><stddev>0.0003</stddev></noise></x>
+              <y><noise type="gaussian"><mean>0</mean><stddev>0.0003</stddev></noise></y>
+              <z><noise type="gaussian"><mean>0</mean><stddev>0.0003</stddev></noise></z>
+            </angular_velocity>
+            <linear_acceleration>
+              <x><noise type="gaussian"><mean>0</mean><stddev>0.017</stddev></noise></x>
+              <y><noise type="gaussian"><mean>0</mean><stddev>0.017</stddev></noise></y>
+              <z><noise type="gaussian"><mean>0</mean><stddev>0.017</stddev></noise></z>
+            </linear_acceleration>
+          </imu>
+          <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+            <ros>
+              <remapping>~/out:=/imu/data_raw</remapping>
+            </ros>
+            <frame_name>imu_link</frame_name>
+            <initial_orientation_as_reference>false</initial_orientation_as_reference>
+          </plugin>
+        </sensor>
+      </gazebo>
+    </xacro:if>
+  </xacro:macro>
+
+</robot>

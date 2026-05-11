@@ -22,9 +22,7 @@ setup(
         (os.path.join('share', package_name, 'config'),
             glob('config/*')),
 
-        # URDF / Xacro robot description
-        (os.path.join('share', package_name, 'urdf'),
-            glob('urdf/*')),
+        # URDF moved to morphonav_description package — single source of truth.
     ],
     install_requires=['setuptools'],
     zip_safe=True,

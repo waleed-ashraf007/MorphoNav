@@ -1,0 +1,25 @@
+# Default Tier 2 + Tier 3 parameter values for the morphonav_esp32 micro-ROS node.
+#
+# After first flash, populate the ESP32's NVS by running on the host:
+#   ros2 param load /morphonav_esp32 default_params.yaml
+#
+# Re-run after editing to push new values without a reflash.
+
+/morphonav_esp32:
+  ros__parameters:
+    imu:
+      publish_rate_hz: 100
+      accel_fsr_g: 4
+      gyro_fsr_dps: 500
+      dlpf_hz: 41
+      mag_mode_100hz: true
+      axis_remap: "+x,+y,+z"
+    mag:
+      axis_remap: "+y,+x,-z"
+    gps:
+      publish_rate_hz: 5
+      min_satellites: 4
+      max_hdop: 5.0
+      cov_position: 5.0
+    auto_gyro_at_boot: true
+    trigger_calibration: ""

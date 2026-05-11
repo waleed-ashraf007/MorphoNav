@@ -22,12 +22,14 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
 
-    pkg = get_package_share_directory('simulations')
+    pkg         = get_package_share_directory('simulations')
+    desc_pkg    = get_package_share_directory('morphonav_description')
 
     world_arg     = LaunchConfiguration('world')
     launch_teleop = LaunchConfiguration('launch_teleop')
 
-    urdf_file   = os.path.join(pkg, 'urdf',   'morphonav.urdf.xacro')
+    # Single source of truth: morphonav_description package, with use_sim:=true
+    urdf_file   = os.path.join(desc_pkg, 'urdf',   'morphonav.urdf.xacro')
     slam_params = os.path.join(pkg, 'config', 'slam_params_sim.yaml')
     rviz_config = os.path.join(pkg, 'config', 'morphonav_slam.rviz')
 
@@ -35,7 +37,7 @@ def generate_launch_description():
     world_path = PathJoinSubstitution([pkg, 'worlds', [world_arg, '.world']])
 
     robot_description = ParameterValue(
-        Command([FindExecutable(name='xacro'), ' ', urdf_file]),
+        Command([FindExecutable(name='xacro'), ' ', urdf_file, ' use_sim:=true']),
         value_type=str
     )
 

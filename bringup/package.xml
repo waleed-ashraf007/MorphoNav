@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>morphonav_bringup</name>
+  <version>0.0.1</version>
+  <description>MorphoNav top-level launch composition. Includes sensor_test (P1 smoke test) and the eventual mode-exclusive bringup launches (slam, localization, amcl, gps_outdoor, navigation).</description>
+  <maintainer email="w.ashraf2002@gmail.com">Waleed Ashraf</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>rviz_imu_plugin</exec_depend>
+  <exec_depend>micro_ros_agent</exec_depend>
+  <exec_depend>morphonav_description</exec_depend>
+  <exec_depend>morphonav_imu</exec_depend>
+  <exec_depend>morphonav_gps</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>lidar_slam</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

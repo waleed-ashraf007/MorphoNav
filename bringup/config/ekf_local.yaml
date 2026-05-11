@@ -1,0 +1,65 @@
+# EKF local odometry: fuses /imu/data + /odom (from slam_toolbox) -> /odometry/filtered
+#
+# TF output is DISABLED (publish_tf: false) because slam_toolbox already owns
+# the map->odom->base_footprint chain. A second publisher on odom->base_footprint
+# would cause TF conflicts.
+#
+# State vector: [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+# Indices:       0  1  2  3     4      5    6   7   8   9      10      11    12  13  14
+
+ekf_local:
+  ros__parameters:
+    frequency: 30.0
+    sensor_timeout: 0.1
+    two_d_mode: true          # planar robot — ignore z, roll, pitch
+    publish_tf: false         # slam_toolbox owns odom->base_footprint
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    # --- /imu/data (sensor_msgs/Imu) ---
+    # Provides: orientation (yaw), angular velocity, linear acceleration
+    imu0: /imu/data
+    imu0_config:
+      #      x      y      z
+      - [false, false, false]   # position
+      - [false, false, true ]   # orientation: use yaw only
+      - [false, false, false]   # linear velocity
+      - [false, false, true ]   # angular velocity: use yaw rate
+      - [true,  true,  false]   # linear acceleration: x, y
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true
+
+    # --- /odom (nav_msgs/Odometry from slam_toolbox) ---
+    # Provides: x, y position and yaw from scan matching
+    odom0: /odom
+    odom0_config:
+      #      x      y      z
+      - [true,  true,  false]   # position: x, y
+      - [false, false, true ]   # orientation: yaw
+      - [false, false, false]   # linear velocity
+      - [false, false, false]   # angular velocity
+      - [false, false, false]   # linear acceleration
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 5
+
+    process_noise_covariance:
+      - [0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.05, 0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.06, 0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.03, 0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.06, 0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025, 0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.025, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.04, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.01, 0.0,  0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.01, 0.0,  0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.02, 0.0,  0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.01, 0.0,  0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.01, 0.0]
+      - [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   0.0,   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.015]
