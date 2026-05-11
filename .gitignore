@@ -1,11 +1,10 @@
-
-# VS Code IntelliSense / PlatformIO cache - never commit these
+# VS Code IntelliSense / PlatformIO cache
 .vscode/browse.vc.db
 .vscode/ipch/
 **/.vscode/browse.vc.db
 **/.vscode/ipch/
 *.db
 
-# PlatformIO build artifacts - not needed on Raspberry Pi
+# PlatformIO build artifacts
 .pio/build/
 .pio/libdeps/
