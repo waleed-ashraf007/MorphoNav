@@ -33,7 +33,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ackermann_teleop = simulations.ackermann_teleop:main',
+            'diff_drive_teleop = simulations.diff_drive_teleop:main',
             'trajectory_publisher = simulations.trajectory_publisher:main',
         ],
     },

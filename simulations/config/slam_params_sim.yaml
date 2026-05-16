@@ -3,7 +3,7 @@ slam_toolbox:
     odom_frame:  odom
     map_frame:   map
     base_frame:  base_footprint      # must match robot_base_frame in diff_drive plugin
-    scan_topic:  /scan               # use raw lidar — filter was broken (wrong ROS2 format)
+    scan_topic:  /scan_filtered      # consume range-filtered scans
     use_sim_time: true               # CRITICAL: must be true for Gazebo
 
     mode: mapping

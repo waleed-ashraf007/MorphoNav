@@ -18,6 +18,11 @@ setup(
             glob('rviz/*.rviz')),
         (os.path.join('share', package_name, 'config'),
             glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'maps'),
+            glob('maps/*')),
+        # save_map.sh and any future helpers go in lib/<pkg> so `ros2 run` finds them.
+        (os.path.join('lib', package_name),
+            glob('scripts/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -26,6 +31,8 @@ setup(
     description='MorphoNav top-level launch composition',
     license='Apache-2.0',
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+            'go_to_goal = morphonav_bringup.go_to_goal:main',
+        ],
     },
 )

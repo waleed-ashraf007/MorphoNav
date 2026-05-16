@@ -3,9 +3,16 @@
 
   <!-- Single-source URDF for MorphoNav. Toggle simulation Gazebo plugins via:
          xacro morphonav.urdf.xacro use_sim:=true   (Gazebo)
-         xacro morphonav.urdf.xacro use_sim:=false  (real hardware, default) -->
-  <xacro:arg name="use_sim" default="false"/>
-  <xacro:property name="use_sim" value="$(arg use_sim)"/>
+         xacro morphonav.urdf.xacro use_sim:=false  (real hardware, default)
+
+       Drivetrain: 4-wheel differential drive. RWD drives rear pair; AWD drives
+       both pairs (skid-steer). Select with:
+         xacro morphonav.urdf.xacro drive_mode:=rwd   (default)
+         xacro morphonav.urdf.xacro drive_mode:=awd                                -->
+  <xacro:arg name="use_sim"    default="false"/>
+  <xacro:arg name="drive_mode" default="rwd"/>
+  <xacro:property name="use_sim"    value="$(arg use_sim)"/>
+  <xacro:property name="drive_mode" value="$(arg drive_mode)"/>
 
   <!-- Robot dimensions -->
   <xacro:property name="chassis_l"    value="0.40"/>
@@ -19,7 +26,6 @@
 
   <xacro:property name="wheelbase"   value="0.28"/>
   <xacro:property name="track_width" value="0.30"/>
-  <xacro:property name="steer_limit" value="0.6"/>
 
   <xacro:property name="chassis_z" value="${2*wheel_r + chassis_h/2}"/>
 
@@ -27,7 +33,6 @@
   <xacro:include filename="$(find morphonav_description)/urdf/imu.xacro"/>
   <xacro:include filename="$(find morphonav_description)/urdf/gps.xacro"/>
 
-  <!-- Wheel and steer macros (reused for all four corners) -->
   <xacro:macro name="wheel_link" params="name">
     <link name="${name}">
       <visual>
@@ -56,24 +61,6 @@
           iyy="${wheel_mass*wheel_r*wheel_r/2}"
           izz="${wheel_mass*(3*wheel_r*wheel_r + wheel_w*wheel_w)/12}"
           ixy="0" ixz="0" iyz="0"/>
-      </inertial>
-    </link>
-  </xacro:macro>
-
-  <xacro:macro name="steer_link" params="name">
-    <link name="${name}">
-      <visual>
-        <geometry><cylinder radius="0.013" length="${wheel_r}"/></geometry>
-        <origin xyz="0 0 ${-wheel_r/2}" rpy="0 0 0"/>
-        <material name="axle_silver"><color rgba="0.75 0.75 0.75 1.0"/></material>
-      </visual>
-      <collision>
-        <geometry><cylinder radius="0.013" length="${wheel_r}"/></geometry>
-        <origin xyz="0 0 ${-wheel_r/2}" rpy="0 0 0"/>
-      </collision>
-      <inertial>
-        <mass value="0.05"/>
-        <inertia ixx="0.00002" iyy="0.00002" izz="0.00002" ixy="0" ixz="0" iyz="0"/>
       </inertial>
     </link>
   </xacro:macro>
@@ -125,43 +112,24 @@
     </inertial>
   </link>
 
-  <!-- Front left -->
-  <joint name="front_left_steer_joint" type="revolute">
-    <parent link="base_link"/>
-    <child  link="front_left_steer"/>
-    <origin xyz="${wheelbase/2} ${track_width/2} ${-chassis_h/2}" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
-    <limit lower="${-steer_limit}" upper="${steer_limit}" effort="10.0" velocity="2.0"/>
-  </joint>
-  <xacro:steer_link name="front_left_steer"/>
-
+  <!-- All four wheels are continuous joints parented directly to base_link.
+       Front wheels no longer steer (diff-drive). -->
   <joint name="front_left_wheel_joint" type="continuous">
-    <parent link="front_left_steer"/>
+    <parent link="base_link"/>
     <child  link="front_left_wheel"/>
-    <origin xyz="0 0 ${-wheel_r}" rpy="0 0 0"/>
+    <origin xyz="${wheelbase/2} ${track_width/2} ${-chassis_h/2 - wheel_r}" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
   <xacro:wheel_link name="front_left_wheel"/>
 
-  <!-- Front right -->
-  <joint name="front_right_steer_joint" type="revolute">
-    <parent link="base_link"/>
-    <child  link="front_right_steer"/>
-    <origin xyz="${wheelbase/2} ${-track_width/2} ${-chassis_h/2}" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
-    <limit lower="${-steer_limit}" upper="${steer_limit}" effort="10.0" velocity="2.0"/>
-  </joint>
-  <xacro:steer_link name="front_right_steer"/>
-
   <joint name="front_right_wheel_joint" type="continuous">
-    <parent link="front_right_steer"/>
+    <parent link="base_link"/>
     <child  link="front_right_wheel"/>
-    <origin xyz="0 0 ${-wheel_r}" rpy="0 0 0"/>
+    <origin xyz="${wheelbase/2} ${-track_width/2} ${-chassis_h/2 - wheel_r}" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
   <xacro:wheel_link name="front_right_wheel"/>
 
-  <!-- Rear left -->
   <joint name="rear_left_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child  link="rear_left_wheel"/>
@@ -170,7 +138,6 @@
   </joint>
   <xacro:wheel_link name="rear_left_wheel"/>
 
-  <!-- Rear right -->
   <joint name="rear_right_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child  link="rear_right_wheel"/>
@@ -214,25 +181,25 @@
        ═══════════════════════════════════════════════ -->
   <xacro:if value="${use_sim}">
 
-    <!-- Wheel friction & appearance -->
-    <gazebo reference="rear_left_wheel">
-      <material>Gazebo/FlatBlack</material>
-      <mu1>1.2</mu1><mu2>0.9</mu2>
-      <kp>1000000.0</kp><kd>1.0</kd>
-    </gazebo>
-    <gazebo reference="rear_right_wheel">
-      <material>Gazebo/FlatBlack</material>
-      <mu1>1.2</mu1><mu2>0.9</mu2>
-      <kp>1000000.0</kp><kd>1.0</kd>
-    </gazebo>
-    <gazebo reference="front_left_wheel">
-      <material>Gazebo/FlatBlack</material>
-      <mu1>0.8</mu1><mu2>0.6</mu2>
-    </gazebo>
-    <gazebo reference="front_right_wheel">
-      <material>Gazebo/FlatBlack</material>
-      <mu1>0.8</mu1><mu2>0.6</mu2>
-    </gazebo>
+    <!-- Wheel contact tuning (TurtleBot-style proven values). Low mu2 lets
+         the wheels slide laterally during skid-steer rotation; minDepth +
+         kp prevent the wheels from sinking into the ground. -->
+    <xacro:macro name="wheel_contact" params="name">
+      <gazebo reference="${name}">
+        <material>Gazebo/FlatBlack</material>
+        <mu1>1.0</mu1>
+        <mu2>0.05</mu2>
+        <kp>10000000.0</kp>
+        <kd>1.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>0.5</maxVel>
+        <fdir1>1 0 0</fdir1>
+      </gazebo>
+    </xacro:macro>
+    <xacro:wheel_contact name="rear_left_wheel"/>
+    <xacro:wheel_contact name="rear_right_wheel"/>
+    <xacro:wheel_contact name="front_left_wheel"/>
+    <xacro:wheel_contact name="front_right_wheel"/>
     <gazebo reference="base_link">
       <material>Gazebo/DarkGrey</material>
     </gazebo>
@@ -273,55 +240,67 @@
       </sensor>
     </gazebo>
 
-    <!-- Ackermann drive plugin (replaces the previous diff_drive plugin) -->
-    <gazebo>
-      <plugin name="ackermann_drive" filename="libgazebo_ros_ackermann_drive.so">
-        <update_rate>50.0</update_rate>
+    <!-- Differential-drive plugin. RWD drives only the rear pair; AWD lists
+         all 4 wheels via num_wheel_pairs=2 so the plugin treats them as one
+         skid-steer drivetrain (proper Twist response, no plugin-vs-plugin
+         conflict). publish_odom_tf publishes odom -> base_footprint. -->
+    <xacro:if value="${drive_mode == 'rwd'}">
+      <gazebo>
+        <plugin name="diff_drive" filename="libgazebo_ros_diff_drive.so">
+          <update_rate>50.0</update_rate>
+          <num_wheel_pairs>1</num_wheel_pairs>
+          <left_joint>rear_left_wheel_joint</left_joint>
+          <right_joint>rear_right_wheel_joint</right_joint>
+          <wheel_separation>${track_width}</wheel_separation>
+          <wheel_diameter>${wheel_r*2}</wheel_diameter>
+          <max_wheel_torque>5.0</max_wheel_torque>
+          <max_wheel_acceleration>2.0</max_wheel_acceleration>
+          <command_topic>cmd_vel</command_topic>
+          <odometry_topic>odom</odometry_topic>
+          <odometry_frame>odom</odometry_frame>
+          <robot_base_frame>base_footprint</robot_base_frame>
+          <publish_odom>true</publish_odom>
+          <publish_odom_tf>true</publish_odom_tf>
+          <publish_wheel_tf>false</publish_wheel_tf>
+          <odometry_source>1</odometry_source>
+        </plugin>
+      </gazebo>
+    </xacro:if>
 
-        <front_left_joint>front_left_wheel_joint</front_left_joint>
-        <front_right_joint>front_right_wheel_joint</front_right_joint>
-        <rear_left_joint>rear_left_wheel_joint</rear_left_joint>
-        <rear_right_joint>rear_right_wheel_joint</rear_right_joint>
-        <left_steering_joint>front_left_steer_joint</left_steering_joint>
-        <right_steering_joint>front_right_steer_joint</right_steering_joint>
+    <xacro:if value="${drive_mode == 'awd'}">
+      <gazebo>
+        <plugin name="diff_drive" filename="libgazebo_ros_diff_drive.so">
+          <update_rate>50.0</update_rate>
+          <num_wheel_pairs>2</num_wheel_pairs>
+          <left_joint>rear_left_wheel_joint</left_joint>
+          <left_joint>front_left_wheel_joint</left_joint>
+          <right_joint>rear_right_wheel_joint</right_joint>
+          <right_joint>front_right_wheel_joint</right_joint>
+          <wheel_separation>${track_width}</wheel_separation>
+          <wheel_separation>${track_width}</wheel_separation>
+          <wheel_diameter>${wheel_r*2}</wheel_diameter>
+          <wheel_diameter>${wheel_r*2}</wheel_diameter>
+          <max_wheel_torque>5.0</max_wheel_torque>
+          <max_wheel_acceleration>2.0</max_wheel_acceleration>
+          <command_topic>cmd_vel</command_topic>
+          <odometry_topic>odom</odometry_topic>
+          <odometry_frame>odom</odometry_frame>
+          <robot_base_frame>base_footprint</robot_base_frame>
+          <publish_odom>true</publish_odom>
+          <publish_odom_tf>true</publish_odom_tf>
+          <publish_wheel_tf>false</publish_wheel_tf>
+          <odometry_source>1</odometry_source>
+        </plugin>
+      </gazebo>
+    </xacro:if>
 
-        <max_steer>${steer_limit}</max_steer>
-        <max_steering_angle>${steer_limit}</max_steering_angle>
-        <max_speed>2.0</max_speed>
-
-        <left_steering_pid_gain>1500 0 1</left_steering_pid_gain>
-        <left_steering_i_range>0 0</left_steering_i_range>
-        <right_steering_pid_gain>1500 0 1</right_steering_pid_gain>
-        <right_steering_i_range>0 0</right_steering_i_range>
-        <linear_velocity_pid_gain>1000 0 1</linear_velocity_pid_gain>
-        <linear_velocity_i_range>0 0</linear_velocity_i_range>
-
-        <wheel_separation>${track_width}</wheel_separation>
-        <kingpin_width>${track_width}</kingpin_width>
-        <wheel_base>${wheelbase}</wheel_base>
-        <wheel_radius>${wheel_r}</wheel_radius>
-        <wheel_diameter>${wheel_r*2}</wheel_diameter>
-
-        <robot_base_frame>base_footprint</robot_base_frame>
-        <publish_odom>true</publish_odom>
-        <publish_odom_tf>true</publish_odom_tf>
-        <publish_wheel_tf>false</publish_wheel_tf>
-        <publish_distance>false</publish_distance>
-
-        <odometry_topic>odom</odometry_topic>
-        <odometry_frame>odom</odometry_frame>
-      </plugin>
-    </gazebo>
-
-    <!-- Joint state publisher so RViz/RSP gets all six non-fixed joints -->
+    <!-- Joint state publisher so RViz/RSP gets all four wheel joints -->
     <gazebo>
       <plugin name="joint_state_publisher"
               filename="libgazebo_ros_joint_state_publisher.so">
         <update_rate>30</update_rate>
         <joint_name>rear_left_wheel_joint</joint_name>
         <joint_name>rear_right_wheel_joint</joint_name>
-        <joint_name>front_left_steer_joint</joint_name>
-        <joint_name>front_right_steer_joint</joint_name>
         <joint_name>front_left_wheel_joint</joint_name>
         <joint_name>front_right_wheel_joint</joint_name>
       </plugin>

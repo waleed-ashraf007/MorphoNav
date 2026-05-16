@@ -21,13 +21,9 @@ setup(
         (os.path.join('share', package_name, 'launch'),
             glob('launch/*.py')),
 
-        # config files (ONLY ONCE)
+        # config files
         (os.path.join('share', package_name, 'config'),
-            glob('config/*.yaml')),
-
-        # urdf files
-        (os.path.join('share', package_name, 'urdf'),
-            glob('urdf/*.urdf')),
+            glob('config/*.yaml') + glob('config/*.rviz')),
     ],
 
     install_requires=['setuptools'],

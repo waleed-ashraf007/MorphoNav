@@ -10,6 +10,7 @@
   <exec_depend>laser_filters</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>rviz2</exec_depend>
+  <exec_depend>morphonav_description</exec_depend>
   <buildtool_depend>ament_python</buildtool_depend>
   <export>
     <build_type>ament_python</build_type>

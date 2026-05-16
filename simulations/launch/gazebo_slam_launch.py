@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 MorphoNav Gazebo Simulation Launch File
-Starts: Gazebo + Robot + SLAM Toolbox + RViz
+Starts: Gazebo + Robot + laser_filter + SLAM Toolbox + RViz
 
 Usage:
   ros2 launch simulations gazebo_slam_launch.py
   ros2 launch simulations gazebo_slam_launch.py world:=test_track
+  ros2 launch simulations gazebo_slam_launch.py drive_mode:=awd
   ros2 launch simulations gazebo_slam_launch.py launch_teleop:=true
 """
 
@@ -22,46 +23,44 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
 
-    pkg         = get_package_share_directory('simulations')
-    desc_pkg    = get_package_share_directory('morphonav_description')
+    pkg      = get_package_share_directory('simulations')
+    desc_pkg = get_package_share_directory('morphonav_description')
 
     world_arg     = LaunchConfiguration('world')
     launch_teleop = LaunchConfiguration('launch_teleop')
+    drive_mode    = LaunchConfiguration('drive_mode')
 
-    # Single source of truth: morphonav_description package, with use_sim:=true
-    urdf_file   = os.path.join(desc_pkg, 'urdf',   'morphonav.urdf.xacro')
-    slam_params = os.path.join(pkg, 'config', 'slam_params_sim.yaml')
-    rviz_config = os.path.join(pkg, 'config', 'morphonav_slam.rviz')
+    urdf_file     = os.path.join(desc_pkg, 'urdf',   'morphonav.urdf.xacro')
+    slam_params   = os.path.join(pkg, 'config', 'slam_params_sim.yaml')
+    filter_params = os.path.join(pkg, 'config', 'lidar_filter_params.yaml')
+    rviz_config   = os.path.join(pkg, 'config', 'morphonav_slam.rviz')
 
-    # world filename is built from the launch arg, e.g. world:=open_world
     world_path = PathJoinSubstitution([pkg, 'worlds', [world_arg, '.world']])
 
     robot_description = ParameterValue(
-        Command([FindExecutable(name='xacro'), ' ', urdf_file, ' use_sim:=true']),
+        Command([
+            FindExecutable(name='xacro'), ' ', urdf_file,
+            ' use_sim:=true',
+            ' drive_mode:=', drive_mode,
+        ]),
         value_type=str
     )
 
     return LaunchDescription([
 
         # ── Launch arguments ─────────────────────────────────────────────────
-        DeclareLaunchArgument(
-            'world',
-            default_value='open_world',
-            description='Gazebo .world file basename (open_world or test_track)'
-        ),
-        DeclareLaunchArgument(
-            'launch_teleop',
-            default_value='false',
-            description='Start keyboard teleop in an xterm alongside the simulation'
-        ),
+        DeclareLaunchArgument('world', default_value='open_world',
+            description='Gazebo .world file basename (open_world or test_track)'),
+        DeclareLaunchArgument('launch_teleop', default_value='false',
+            description='Start keyboard teleop in an xterm alongside the simulation'),
+        DeclareLaunchArgument('drive_mode', default_value='rwd',
+            description="Drive mode: 'rwd' (rear pair) or 'awd' (all four wheels)"),
 
-        # ── 1. Gazebo simulator ──────────────────────────────────────────────
+        # ── 1. Gazebo ────────────────────────────────────────────────────────
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(
-                    get_package_share_directory('gazebo_ros'),
-                    'launch', 'gazebo.launch.py'
-                )
+                os.path.join(get_package_share_directory('gazebo_ros'),
+                             'launch', 'gazebo.launch.py')
             ),
             launch_arguments={'world': world_path, 'verbose': 'false'}.items(),
         ),
@@ -91,7 +90,20 @@ def generate_launch_description():
             ],
         ),
 
-        # ── 4. SLAM Toolbox ──────────────────────────────────────────────────
+        # ── 4. Laser filter (/scan → /scan_filtered) ─────────────────────────
+        Node(
+            package='laser_filters',
+            executable='scan_to_scan_filter_chain',
+            name='laser_filter',
+            output='screen',
+            parameters=[filter_params, {'use_sim_time': True}],
+            remappings=[
+                ('scan',          '/scan'),
+                ('scan_filtered', '/scan_filtered'),
+            ],
+        ),
+
+        # ── 5. SLAM Toolbox ──────────────────────────────────────────────────
         Node(
             package='slam_toolbox',
             executable='async_slam_toolbox_node',
@@ -100,7 +112,7 @@ def generate_launch_description():
             parameters=[slam_params, {'use_sim_time': True}],
         ),
 
-        # ── 5. RViz ─────────────────────────────────────────────────────────
+        # ── 6. RViz ─────────────────────────────────────────────────────────
         Node(
             package='rviz2',
             executable='rviz2',
@@ -110,23 +122,21 @@ def generate_launch_description():
         ),
 
         LogInfo(
-            msg='Drive with: ros2 run simulations ackermann_teleop  '
+            msg='Drive with: ros2 run simulations diff_drive_teleop  '
                 '(or set launch_teleop:=true)'
         ),
 
-        # ── 6. Teleop (optional, opens its own xterm) ────────────────────────
+        # ── 7. Teleop (optional) ─────────────────────────────────────────────
         Node(
             package='simulations',
-            executable='ackermann_teleop',
+            executable='diff_drive_teleop',
             name='twist_teleop',
             output='screen',
             prefix='xterm -e',
             condition=IfCondition(launch_teleop),
         ),
-        
-         # ── 7. Trajectory Publisher ──────────────────────────────────────
-        # Reads /odom and publishes nav_msgs/Path to /trajectory
-        # RViz renders this as a growing trail behind the robot
+
+        # ── 8. Trajectory Publisher ──────────────────────────────────────────
         Node(
             package='simulations',
             executable='trajectory_publisher',
@@ -134,7 +144,7 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'use_sim_time': True,
-                'max_poses': 0,   # 0 = unlimited; set e.g. 500 to cap trail length
+                'max_poses': 0,
             }],
         ),
     ])

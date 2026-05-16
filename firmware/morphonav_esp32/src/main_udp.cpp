@@ -19,10 +19,12 @@
 #include "config.h"
 #include "wifi_config.h"
 #include "mpu9250.h"
+#include "motor_control.h"
 
 static MPU9250  imu;
 static Madgwick filter;
-static WiFiUDP  udp;
+static WiFiUDP  udp;             // outgoing IMU stream
+static WiFiUDP  cmd_udp;         // incoming cmd_vel stream
 static IPAddress host_ip;
 static bool     imu_ok = false;
 
@@ -117,8 +119,41 @@ void setup() {
     host_ip.fromString(HOST_IP);
     udp.begin(0);              // ephemeral local port; we only send
 
+    cmd_udp.begin(CMD_VEL_UDP_PORT);
+    motor::init();
+
     Serial.printf("Streaming IMU JSON to %s:%u at %.0f Hz (imu_ok=%d)\n",
                   HOST_IP, (unsigned)UDP_PORT, SAMPLE_HZ, (int)imu_ok);
+    Serial.printf("Listening for cmd_vel JSON on UDP port %u\n",
+                  (unsigned)CMD_VEL_UDP_PORT);
+}
+
+
+// Parse JSON of the form: {"vx": <float>, "wz": <float>}
+// Tolerant: ignores other fields, returns false if either is missing.
+static bool parseCmdVel(const char* buf, int n, float& vx, float& wz) {
+    auto extract = [&](const char* key, float& out) {
+        const char* p = strstr(buf, key);
+        if (!p) return false;
+        p = strchr(p, ':');
+        if (!p) return false;
+        out = strtof(p + 1, nullptr);
+        return true;
+    };
+    return extract("\"vx\"", vx) & extract("\"wz\"", wz);
+}
+
+static void pumpCmdVel() {
+    int n = cmd_udp.parsePacket();
+    if (n <= 0) return;
+    char buf[128];
+    int got = cmd_udp.read(buf, sizeof(buf) - 1);
+    if (got <= 0) return;
+    buf[got] = '\0';
+    float vx, wz;
+    if (parseCmdVel(buf, got, vx, wz)) {
+        motor::setCmdVel(vx, wz);
+    }
 }
 
 
@@ -127,8 +162,13 @@ void loop() {
     static uint32_t last_recovery_ms = 0;
     const uint32_t now = micros();
 
+    // Motor control runs every loop iteration regardless of IMU state.
+    pumpCmdVel();
+    motor::tick();
+
     if (WiFi.status() != WL_CONNECTED) {
         Serial.println("WiFi: link lost — reconnecting");
+        motor::stop();
         connectWifi();
     }
 

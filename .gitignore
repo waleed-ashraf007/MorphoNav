@@ -8,3 +8,13 @@
 # PlatformIO build artifacts
 .pio/build/
 .pio/libdeps/
+
+# colcon build artifacts (should never live in src tree)
+build/
+install/
+log/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
