@@ -96,8 +96,8 @@ controller_server:
 
     progress_checker:
       plugin: nav2_controller::SimpleProgressChecker
-      required_movement_radius: 0.1
-      movement_time_allowance: 20.0
+      required_movement_radius: 0.05
+      movement_time_allowance: 30.0
 
     goal_checker:
       plugin: nav2_controller::SimpleGoalChecker
@@ -141,7 +141,7 @@ local_costmap:
       use_sim_time: false
       update_frequency: 5.0
       publish_frequency: 2.0
-      global_frame: odom
+      global_frame: map
       robot_base_frame: base_footprint
       rolling_window: true
       transform_tolerance: 1.0
