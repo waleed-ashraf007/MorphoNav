@@ -33,13 +33,24 @@ from nav2_common.launch import RewrittenYaml
 
 
 def generate_launch_description():
-    bringup_pkg = get_package_share_directory('morphonav_bringup')
-    lidar_pkg   = get_package_share_directory('lidar_slam')
-    desc_pkg    = get_package_share_directory('morphonav_description')
-    imu_pkg     = get_package_share_directory('morphonav_imu')
+    bringup_pkg  = get_package_share_directory('morphonav_bringup')
+    lidar_pkg    = get_package_share_directory('lidar_slam')
+    desc_pkg     = get_package_share_directory('morphonav_description')
+    imu_pkg      = get_package_share_directory('morphonav_imu')
+    nav2_bt_pkg  = get_package_share_directory('nav2_bt_navigator')
+
+    # Simple BT tree: ComputePathToPose → FollowPath, no Spin/BackUp recovery.
+    # Spin and BackUp track progress via odom→base_footprint TF change, which
+    # never changes with our static identity TF (no wheel encoders). Using the
+    # full recovery tree causes silent 60-second abort loops.
+    simple_bt_xml = os.path.join(
+        nav2_bt_pkg, 'behavior_trees',
+        'navigate_w_replanning_only_if_goal_is_updated.xml'
+    )
 
     drive_mode = LaunchConfiguration('drive_mode')
     udp_port   = LaunchConfiguration('udp_port')
+    lidar_port = LaunchConfiguration('lidar_port')
 
     nav2_params_file = os.path.join(bringup_pkg, 'config', 'nav2_params.yaml')
     rviz_config      = os.path.join(bringup_pkg, 'rviz',   'rviz_nav2.rviz')
@@ -69,6 +80,8 @@ def generate_launch_description():
             description="Drive mode: 'rwd' (rear pair) or 'awd' (all four wheels)"),
         DeclareLaunchArgument('udp_port',   default_value='8888',
             description='UDP port the ESP32 streams IMU JSON to'),
+        DeclareLaunchArgument('lidar_port', default_value='/dev/ttyUSB0',
+            description='Serial port for RPLidar (USB0 when IMU is UDP-only)'),
 
         # ── 1. ESP32 UDP IMU ─────────────────────────────────────────────────
         Node(
@@ -108,8 +121,10 @@ def generate_launch_description():
             name='rplidar_node',
             output='screen',
             parameters=[{
-                'serial_port': '/dev/ttyUSB1',
+                'serial_port': lidar_port,
                 'serial_baudrate': 115200,
+                'frame_id': 'laser_frame',
+                'angle_compensate': True,
                 'scan_mode': 'Standard',
             }],
         ),
@@ -125,6 +140,17 @@ def generate_launch_description():
                 ('scan',          '/scan'),
                 ('scan_filtered', '/scan_filtered'),
             ],
+        ),
+
+        # ── 6b. Static odom->base_footprint — slam_toolbox needs this as input;
+        #        no wheel encoders so it stays identity; slam_toolbox updates
+        #        map->odom to track the real position instead.
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='odom_to_base_footprint',
+            arguments=['--frame-id', 'odom', '--child-frame-id', 'base_footprint'],
+            output='screen',
         ),
 
         # ── 7. SLAM Toolbox (mapping) ────────────────────────────────────────
@@ -170,7 +196,9 @@ def generate_launch_description():
             executable='bt_navigator',
             name='bt_navigator',
             output='screen',
-            parameters=[nav2_params],
+            parameters=[nav2_params, {
+                'default_nav_to_pose_bt_xml': simple_bt_xml,
+            }],
         ),
         Node(
             package='nav2_waypoint_follower',
