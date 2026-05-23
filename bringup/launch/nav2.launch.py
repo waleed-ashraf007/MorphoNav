@@ -53,6 +53,7 @@ def generate_launch_description():
     udp_port   = LaunchConfiguration('udp_port')
     lidar_port = LaunchConfiguration('lidar_port')
     use_rviz   = LaunchConfiguration('use_rviz')
+    use_imu    = LaunchConfiguration('use_imu')
 
     nav2_params_file = os.path.join(bringup_pkg, 'config', 'nav2_params.yaml')
     rviz_config      = os.path.join(bringup_pkg, 'rviz',   'rviz_nav2.rviz')
@@ -80,6 +81,8 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('use_rviz', default_value='true',
             description='Launch RViz2 (set false on RPi, true on laptop)'),
+        DeclareLaunchArgument('use_imu', default_value='true',
+            description='Launch IMU nodes (set false when only LiDAR is connected)'),
         DeclareLaunchArgument('drive_mode', default_value='rwd',
             description="Drive mode: 'rwd' (rear pair) or 'awd' (all four wheels)"),
         DeclareLaunchArgument('udp_port',   default_value='8888',
@@ -100,6 +103,7 @@ def generate_launch_description():
                 'fused_topic': '/imu/data_udp',
                 'publish_fused': True,
             }],
+            condition=IfCondition(use_imu),
         ),
 
         # ── 2. URDF / robot_state_publisher ──────────────────────────────────
@@ -116,6 +120,7 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(imu_filter_launch),
             launch_arguments={'use_sim_time': 'false'}.items(),
+            condition=IfCondition(use_imu),
         ),
 
         # ── 5. RPLidar -> /scan ──────────────────────────────────────────────
