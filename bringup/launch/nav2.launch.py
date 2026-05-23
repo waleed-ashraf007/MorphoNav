@@ -26,6 +26,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -51,6 +52,7 @@ def generate_launch_description():
     drive_mode = LaunchConfiguration('drive_mode')
     udp_port   = LaunchConfiguration('udp_port')
     lidar_port = LaunchConfiguration('lidar_port')
+    use_rviz   = LaunchConfiguration('use_rviz')
 
     nav2_params_file = os.path.join(bringup_pkg, 'config', 'nav2_params.yaml')
     rviz_config      = os.path.join(bringup_pkg, 'rviz',   'rviz_nav2.rviz')
@@ -76,6 +78,8 @@ def generate_launch_description():
     ]
 
     return LaunchDescription([
+        DeclareLaunchArgument('use_rviz', default_value='true',
+            description='Launch RViz2 (set false on RPi, true on laptop)'),
         DeclareLaunchArgument('drive_mode', default_value='rwd',
             description="Drive mode: 'rwd' (rear pair) or 'awd' (all four wheels)"),
         DeclareLaunchArgument('udp_port',   default_value='8888',
@@ -227,5 +231,6 @@ def generate_launch_description():
             name='rviz2',
             output='screen',
             arguments=['-d', rviz_config],
+            condition=IfCondition(use_rviz),
         ),
     ])
