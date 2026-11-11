@@ -46,7 +46,8 @@ u-blox NEO-7M	GPS, supporting odometry
 4 legs x (3 servos + 1 wheel motor)	16 degrees of freedom
 
 Known sensor limitations the design accounts for: GPS drift, IMU noise from motor vibration, and the A1's slow scan rate.
-![Uploading image.png…]()
+<img width="510" height="330" alt="image" src="https://github.com/user-attachments/assets/782fe6a9-d017-485a-b345-f59b7a9cc1ed" />
+
 
 Software stack
 
@@ -68,6 +69,7 @@ posture/	Leg posture control
 sensors/	Sensor configuration
 simulations/	Gazebo simulation
 Getting started
+<img width="1542" height="867" alt="image" src="https://github.com/user-attachments/assets/8d722c03-c2b9-4784-b923-3374a6bdaf18" />
 
 Prerequisites: Ubuntu 22.04, ROS 2 Humble, xacro, Nav2, slam_toolbox, robot_localization.
 
