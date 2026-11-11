@@ -45,6 +45,7 @@ u-blox NEO-7M	GPS, supporting odometry
 4 legs x (3 servos + 1 wheel motor)	16 degrees of freedom
 
 Known sensor limitations the design accounts for: GPS drift, IMU noise from motor vibration, and the A1's slow scan rate.
+![Uploading image.png…]()
 
 Software stack
 
@@ -99,4 +100,4 @@ Complete the Nav2 go-to-goal pipeline in simulation, then on the physical robot.
 Browser-based remote interface using rosbridge_suite, roslibjs, and ros2djs, with the Pi acting as a WiFi hotspot for field use.
 Author
 
-Waleed Ashraf, final-year engineering student, Cairo University. Member of CU Horus (Shell Eco-marathon).
+Waleed Abdelnabi, final-year engineering student, Cairo University.
