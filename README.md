@@ -1,4 +1,5 @@
-![Uploading image.png…]()
+<img width="478" height="480" alt="image" src="https://github.com/user-attachments/assets/52fbbe27-4f7a-41f8-8ad7-1c5e48a32751" />
+
 
 
 MorphoNav is built around the multi-modal mobility idea: a single robot platform that can adapt how it moves to the terrain it faces. Wheels are fast and efficient on open ground, while a legged body adds flexibility in rough or confined spaces. The autonomy stack in this repository currently drives the robot on its wheels, with the legs held in a fixed posture.
